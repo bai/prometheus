@@ -18,7 +18,8 @@ Release cadence of first pre-releases being cut is 6 weeks.
 | v2.11          | 2019-07-03                                 | Frederic Branczyk (GitHub: @brancz)         |
 | v2.12          | 2019-08-14                                 | Julius Volz (GitHub: @juliusv)              |
 | v2.13          | 2019-09-25                                 | Krasi Georgiev (GitHub: @krasi-georgiev)    |
-| v2.14          | 2019-11-06                                 | **searching for volunteer**                 |
+| v2.14          | 2019-11-06                                 | Vlad Gorodetsky (GitHub: @bai)              |
+| v2.15          | 2019-12-18                                 | **searching for volunteer**                 |
 
 If you are interested in volunteering please create a pull request against the [prometheus/prometheus](https://github.com/prometheus/prometheus) repository and propose yourself for the release series of your choice.
 
@@ -29,7 +30,7 @@ The release shepherd is responsible for the entire release series of a minor rel
 * We aim to keep the master branch in a working state at all times. In principle, it should be possible to cut a release from master at any time. In practice, things might not work out as nicely. A few days before the pre-release is scheduled, the shepherd should check the state of master. Following their best judgement, the shepherd should try to expedite bug fixes that are still in progress but should make it into the release. On the other hand, the shepherd may hold back merging last-minute invasive and risky changes that are better suited for the next minor release.
 * On the date listed in the table above, the release shepherd cuts the first pre-release (using the suffix `-rc.0`) and creates a new branch called  `release-<major>.<minor>` starting at the commit tagged for the pre-release. In general, a pre-release is considered a release candidate (that's what `rc` stands for) and should therefore not contain any known bugs that are planned to be fixed in the final release.
 * With the pre-release, the release shepherd is responsible for running and monitoring a benchmark run of the pre-release for 3 days, after which, if successful, the pre-release is promoted to a stable release.
-* If regressions or critical bugs are detected, they need to get fixed before cutting a new pre-release (called `-rc.1`, `-rc.2`, etc.). 
+* If regressions or critical bugs are detected, they need to get fixed before cutting a new pre-release (called `-rc.1`, `-rc.2`, etc.).
 
 See the next section for details on cutting an individual release.
 
@@ -90,7 +91,7 @@ If the release has happened in the latest release branch, merge the changes into
 
 To update the docs, a PR needs to be created to `prometheus/docs`. See [this PR](https://github.com/prometheus/docs/pull/952/files) for inspiration.
 
-Once the binaries have been uploaded, announce the release on `prometheus-announce@googlegroups.com`. (Please do not use `prometheus-users@googlegroups.com` for announcements anymore.) Check out previous announcement mails for inspiration. 
+Once the binaries have been uploaded, announce the release on `prometheus-announce@googlegroups.com`. (Please do not use `prometheus-users@googlegroups.com` for announcements anymore.) Check out previous announcement mails for inspiration.
 
 ### Pre-releases
 
@@ -99,4 +100,3 @@ The following changes to the above procedures apply:
 * In line with [Semantic Versioning](https://semver.org/), append something like `-rc.0` to the version (with the corresponding changes to the tag name, the release name etc.).
 * Tick the _This is a pre-release_ box when drafting the release in the Github UI.
 * Still update `CHANGELOG.md`, but when you cut the final release later, merge all the changes from the pre-releases into the one final update.
-
