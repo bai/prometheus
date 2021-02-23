@@ -1,10 +1,21 @@
-Maintainers of this repository with their focus areas:
+Julien Pivotto (<roidelapluie@prometheus.io> / @roidelapluie) is the main/default maintainer, some parts of the codebase have other maintainers:
 
-* Brian Brazil <brian.brazil@robustperception.io> @brian-brazil: Console templates; semantics of PromQL, service discovery, and relabeling.
-* Fabian Reinartz <freinartz@google.com> @fabxc: PromQL parsing and evaluation; implementation of retrieval, alert notification, and service discovery.
-* Julius Volz <julius.volz@gmail.com> @juliusv: Web UI.
-* Krasi Georgiev <kgeorgie@redhat.com> @krasi-georgiev: TSDB - the storage engine.
-* Ganesh Vernekar <cs15btech11018@iith.ac.in> @codesome: TSDB - the storage engine.
-* Chris Marchbanks <csmarchbanks@gmail.com> @csmarchbanks: Remote write integration.
-* Callum Styan <callumstyan@gmail.com> @cstyan: Remote write integration.
-* Bartłomiej Płotka <bwplotka@gmail.com> @bwplotka: Remote read integration.
+* `cmd`
+  * `promtool`: Simon Pasquier (<pasquier.simon@gmail.com> / @simonpasquier)
+* `discovery`
+  * `k8s`: Frederic Branczyk (<fbranczyk@gmail.com> / @brancz)
+* `documentation`
+  * `prometheus-mixin`: Björn Rabenstein (<beorn@grafana.com> / @beorn7)
+* `storage`
+  * `remote`: Chris Marchbanks (<csmarchbanks@gmail.com> / @csmarchbanks), Callum Styan (<callumstyan@gmail.com> / @cstyan), Bartłomiej Płotka (<bwplotka@gmail.com> / @bwplotka)
+* `tsdb`: Ganesh Vernekar (<ganesh@grafana.com> / @codesome), Bartłomiej Płotka (<bwplotka@gmail.com> / @bwplotka)
+* `web`
+  * `ui`: Julius Volz (<julius.volz@gmail.com> / @juliusv)
+* `Makefile` and related build configuration: Simon Pasquier (<pasquier.simon@gmail.com> / @simonpasquier), Ben Kochie (<superq@gmail.com> / @SuperQ)
+
+For the sake of brevity, not all subtrees are explicitly listed. Due to the
+size of this repository, the natural changes in focus of maintainers over time,
+and nuances of where particular features live, this list will always be
+incomplete and out of date. However the listed maintainer(s) should be able to
+direct a PR/question to the right person.
+

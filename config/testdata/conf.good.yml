@@ -14,20 +14,26 @@ rule_files:
 
 remote_write:
   - url: http://remote1/push
+    name: drop_expensive
     write_relabel_configs:
     - source_labels: [__name__]
       regex:         expensive.*
       action:        drop
   - url: http://remote2/push
+    name: rw_tls
     tls_config:
       cert_file: valid_cert_file
       key_file: valid_key_file
+    headers:
+      name: value
 
 remote_read:
   - url: http://remote1/read
     read_recent: true
+    name: default
   - url: http://remote3/read
     read_recent: false
+    name: read_special
     required_matchers:
       job: special
     tls_config:
@@ -73,7 +79,8 @@ scrape_configs:
     replacement:   static
     target_label:  abc
 
-  bearer_token_file: valid_token_file
+  authorization:
+    credentials_file: valid_token_file
 
 
 - job_name: service-x
@@ -152,7 +159,8 @@ scrape_configs:
     cert_file: valid_cert_file
     key_file: valid_key_file
 
-  bearer_token: mysecret
+  authorization:
+    credentials: mysecret
 
 - job_name: service-kubernetes
 
@@ -255,6 +263,16 @@ scrape_configs:
       cert_file: valid_cert_file
       key_file: valid_key_file
 
+- job_name: digitalocean-droplets
+  digitalocean_sd_configs:
+    - authorization:
+        credentials: abcdef
+
+- job_name: dockerswarm
+  dockerswarm_sd_configs:
+  - host: http://127.0.0.1:2375
+    role: nodes
+
 - job_name: service-openstack
   openstack_sd_configs:
   - role: instance
@@ -265,6 +283,20 @@ scrape_configs:
       ca_file: valid_ca_file
       cert_file: valid_cert_file
       key_file:  valid_key_file
+
+- job_name: hetzner
+  hetzner_sd_configs:
+    - role: hcloud
+      authorization:
+        credentials: abcdef
+    - role: robot
+      basic_auth:
+        username: abcdef
+        password: abcdef
+
+- job_name: service-eureka
+  eureka_sd_configs:
+    - server: 'http://eureka.example.com:8761/eureka'
 
 alerting:
   alertmanagers:

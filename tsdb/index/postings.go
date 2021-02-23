@@ -79,12 +79,43 @@ func (p *MemPostings) SortedKeys() []labels.Label {
 	return keys
 }
 
+// LabelNames returns all the unique label names.
+func (p *MemPostings) LabelNames() []string {
+	p.mtx.RLock()
+	defer p.mtx.RUnlock()
+	n := len(p.m)
+	if n == 0 {
+		return nil
+	}
+
+	names := make([]string, 0, n-1)
+	for name := range p.m {
+		if name != allPostingsKey.Name {
+			names = append(names, name)
+		}
+	}
+	return names
+}
+
+// LabelValues returns label values for the given name.
+func (p *MemPostings) LabelValues(name string) []string {
+	p.mtx.RLock()
+	defer p.mtx.RUnlock()
+
+	values := make([]string, 0, len(p.m[name]))
+	for v := range p.m[name] {
+		values = append(values, v)
+	}
+	return values
+}
+
 // PostingsStats contains cardinality based statistics for postings.
 type PostingsStats struct {
 	CardinalityMetricsStats []Stat
 	CardinalityLabelStats   []Stat
 	LabelValueStats         []Stat
 	LabelValuePairsStats    []Stat
+	NumLabelPairs           int
 }
 
 // Stats calculates the cardinality statistics from postings.
@@ -98,6 +129,7 @@ func (p *MemPostings) Stats(label string) *PostingsStats {
 	labels := &maxHeap{}
 	labelValueLength := &maxHeap{}
 	labelValuePairs := &maxHeap{}
+	numLabelPairs := 0
 
 	metrics.init(maxNumOfRecords)
 	labels.init(maxNumOfRecords)
@@ -109,6 +141,7 @@ func (p *MemPostings) Stats(label string) *PostingsStats {
 			continue
 		}
 		labels.push(Stat{Name: n, Count: uint64(len(e))})
+		numLabelPairs += len(e)
 		size = 0
 		for name, values := range e {
 			if n == label {
@@ -127,6 +160,7 @@ func (p *MemPostings) Stats(label string) *PostingsStats {
 		CardinalityLabelStats:   labels.get(),
 		LabelValueStats:         labelValueLength.get(),
 		LabelValuePairsStats:    labelValuePairs.get(),
+		NumLabelPairs:           numLabelPairs,
 	}
 }
 
@@ -170,7 +204,7 @@ func (p *MemPostings) EnsureOrder() {
 	for i := 0; i < n; i++ {
 		go func() {
 			for l := range workc {
-				sort.Slice(l, func(i, j int) bool { return l[i] < l[j] })
+				sort.Slice(l, func(a, b int) bool { return l[a] < l[b] })
 			}
 			wg.Done()
 		}()
@@ -453,10 +487,10 @@ func (h *postingsHeap) Pop() interface{} {
 }
 
 type mergedPostings struct {
-	h          postingsHeap
-	initilized bool
-	cur        uint64
-	err        error
+	h           postingsHeap
+	initialized bool
+	cur         uint64
+	err         error
 }
 
 func newMergedPostings(p []Postings) (m *mergedPostings, nonEmpty bool) {
@@ -485,10 +519,10 @@ func (it *mergedPostings) Next() bool {
 	}
 
 	// The user must issue an initial Next.
-	if !it.initilized {
+	if !it.initialized {
 		heap.Init(&it.h)
 		it.cur = it.h[0].At()
-		it.initilized = true
+		it.initialized = true
 		return true
 	}
 
@@ -519,7 +553,7 @@ func (it *mergedPostings) Seek(id uint64) bool {
 	if it.h.Len() == 0 || it.err != nil {
 		return false
 	}
-	if !it.initilized {
+	if !it.initialized {
 		if !it.Next() {
 			return false
 		}

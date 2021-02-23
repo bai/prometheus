@@ -15,6 +15,7 @@ package kubernetes
 
 import (
 	"context"
+	"github.com/prometheus/prometheus/util/strutil"
 	"net"
 	"strconv"
 
@@ -27,6 +28,12 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	"github.com/prometheus/prometheus/discovery/targetgroup"
+)
+
+var (
+	epAddCount    = eventCount.WithLabelValues("endpoints", "add")
+	epUpdateCount = eventCount.WithLabelValues("endpoints", "update")
+	epDeleteCount = eventCount.WithLabelValues("endpoints", "delete")
 )
 
 // Endpoints discovers new endpoint targets.
@@ -62,15 +69,15 @@ func NewEndpoints(l log.Logger, svc, eps, pod cache.SharedInformer) *Endpoints {
 
 	e.endpointsInf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(o interface{}) {
-			eventCount.WithLabelValues("endpoints", "add").Inc()
+			epAddCount.Inc()
 			e.enqueue(o)
 		},
 		UpdateFunc: func(_, o interface{}) {
-			eventCount.WithLabelValues("endpoints", "update").Inc()
+			epUpdateCount.Inc()
 			e.enqueue(o)
 		},
 		DeleteFunc: func(o interface{}) {
-			eventCount.WithLabelValues("endpoints", "delete").Inc()
+			epDeleteCount.Inc()
 			e.enqueue(o)
 		},
 	})
@@ -98,15 +105,15 @@ func NewEndpoints(l log.Logger, svc, eps, pod cache.SharedInformer) *Endpoints {
 		// TODO(fabxc): potentially remove add and delete event handlers. Those should
 		// be triggered via the endpoint handlers already.
 		AddFunc: func(o interface{}) {
-			eventCount.WithLabelValues("service", "add").Inc()
+			svcAddCount.Inc()
 			serviceUpdate(o)
 		},
 		UpdateFunc: func(_, o interface{}) {
-			eventCount.WithLabelValues("service", "update").Inc()
+			svcUpdateCount.Inc()
 			serviceUpdate(o)
 		},
 		DeleteFunc: func(o interface{}) {
-			eventCount.WithLabelValues("service", "delete").Inc()
+			svcDeleteCount.Inc()
 			serviceUpdate(o)
 		},
 	})
@@ -163,7 +170,7 @@ func (e *Endpoints) process(ctx context.Context, ch chan<- []*targetgroup.Group)
 		return true
 	}
 	if !exists {
-		send(ctx, e.logger, RoleEndpoint, ch, &targetgroup.Group{Source: endpointsSourceFromNamespaceAndName(namespace, name)})
+		send(ctx, ch, &targetgroup.Group{Source: endpointsSourceFromNamespaceAndName(namespace, name)})
 		return true
 	}
 	eps, err := convertToEndpoints(o)
@@ -171,7 +178,7 @@ func (e *Endpoints) process(ctx context.Context, ch chan<- []*targetgroup.Group)
 		level.Error(e.logger).Log("msg", "converting to Endpoints object failed", "err", err)
 		return true
 	}
-	send(ctx, e.logger, RoleEndpoint, ch, e.buildEndpoints(eps))
+	send(ctx, ch, e.buildEndpoints(eps))
 	return true
 }
 
@@ -193,6 +200,8 @@ func endpointsSourceFromNamespaceAndName(namespace, name string) string {
 }
 
 const (
+	endpointsLabelPrefix           = metaLabelPrefix + "endpoints_label_"
+	endpointsLabelPresentPrefix    = metaLabelPrefix + "endpoints_labelpresent_"
 	endpointsNameLabel             = metaLabelPrefix + "endpoints_name"
 	endpointNodeName               = metaLabelPrefix + "endpoint_node_name"
 	endpointHostname               = metaLabelPrefix + "endpoint_hostname"
@@ -212,6 +221,12 @@ func (e *Endpoints) buildEndpoints(eps *apiv1.Endpoints) *targetgroup.Group {
 		endpointsNameLabel: lv(eps.Name),
 	}
 	e.addServiceLabels(eps.Namespace, eps.Name, tg)
+	//add endponits labels metadata
+	for k, v := range eps.Labels {
+		ln := strutil.SanitizeLabelName(k)
+		tg.Labels[model.LabelName(endpointsLabelPrefix+ln)] = lv(v)
+		tg.Labels[model.LabelName(endpointsLabelPresentPrefix+ln)] = presentValue
+	}
 
 	type podEntry struct {
 		pod          *apiv1.Pod
